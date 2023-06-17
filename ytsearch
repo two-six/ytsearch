@@ -1,0 +1,49 @@
+#! /usr/bin/python
+
+from youtubesearchpython import *
+import argparse
+
+
+def searchVideos(args):
+    l = 10 if args.limit is None else args.limit
+    videosSearch = VideosSearch(args.name, l)
+
+    for i in videosSearch.result()['result']:
+        print("Title: " + i['title'])
+        print("Channel: " + i['channel']['name'])
+        print("Channel ID: " + i['channel']['id'])
+        print("Views: " + i['viewCount']['short'])
+        print("Link: " + i['link'])
+        print("-------------------------------------------\n")
+
+def channelVideos(args):
+    try:
+        channel_id = args.name
+        playlist = Playlist(playlist_from_channel_id(channel_id))
+        l = 10 if args.limit is None else args.limit
+        for i in range(l):
+            print("Title: " + playlist.videos[i]['title'])
+            print("Link: " + playlist.videos[i]['link'].split('&')[0])
+            print("-------------------------------------------\n")
+    except:
+        videosSearch = VideosSearch(args.name, 20)
+        channel_id_dict = {}
+        for i in videosSearch.result()['result']:
+            channel_id = i['channel']['id']
+            if channel_id in channel_id_dict:
+                channel_id_dict[channel_id] += 1
+            else:
+                channel_id_dict[channel_id] = 1
+        args.name = max(channel_id_dict, key=channel_id_dict.get)
+        channelVideos(args)
+
+parser = argparse.ArgumentParser(description='Search youtube videos and channels')
+parser.add_argument('name', metavar='QUERY', type=str, help="Search Query or Channel ID")
+parser.add_argument('-l', '--limit', type=int, help="Limit search results to provided number")
+parser.add_argument('-c', '--channel', action="store_true", help="Get Channel Videos")
+
+args = parser.parse_args()
+if args.channel:
+    channelVideos(args)
+else:
+    searchVideos(args)
